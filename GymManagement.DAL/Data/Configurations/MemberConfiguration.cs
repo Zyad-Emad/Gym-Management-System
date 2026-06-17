@@ -9,11 +9,10 @@ using System.Threading.Tasks;
 
 namespace GymManagement.DAL.Data.Configurations
 {
-    internal class MemberConfiguration : GymUserConfiguration<Member>
+    internal class MemberConfiguration : GymUserConfiguration<Member> , IEntityTypeConfiguration<Member>
     {
-        public override void Configure(EntityTypeBuilder<Member> builder)
+        public new void Configure(EntityTypeBuilder<Member> builder)
         {
-            base.Configure(builder);
 
             //Member configuration
             builder.Property(m => m.JoinDate)
@@ -21,6 +20,7 @@ namespace GymManagement.DAL.Data.Configurations
 
             builder.Property(m => m.Photo)
                    .HasMaxLength(500);
+            base.Configure(builder);
 
         }
     }

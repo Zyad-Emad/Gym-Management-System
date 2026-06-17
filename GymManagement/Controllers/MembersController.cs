@@ -20,7 +20,34 @@ namespace GymManagement.PL.Controllers
             var members = await _memberService.GetAllMembersAsync(ct);
             return View(members);
         }
+        //GET BaseUrl/Members/MemberDetails/{id}
+        //MemberDetails - Show one member's details 
+        public async Task<IActionResult> MemberDetails(int id, CancellationToken ct)
+        {
+            var member = await _memberService.GetMemberDetailsByIdAsync(id , ct);
+            if(member == null)
+            {
+                TempData["ErrorMessage"] = "Member Not Found";
+                return RedirectToAction(nameof(Index));
+            }
+            return View(member);
 
+        }
+
+        //GET BaseUrl/Members/HealthRecordDetails/{id}
+        //HealthRecordDetails - Show one member's details 
+        public async Task<IActionResult> HealthRecordDetails(int id, CancellationToken ct)
+        {
+            //Get HealthRecord By MemberId
+            var result = await _memberService.GetMemberHealthRecordAsync(id, ct);
+
+            if (result == null)
+            {
+                TempData["ErrorMessage"] = "Health Record Not Found";
+                return RedirectToAction(nameof(Index));
+            }
+            return View(result);
+        }
         #region Create Member
         //GET BaseUrl/Members/Create
         // Create - show empty form
@@ -40,5 +67,67 @@ namespace GymManagement.PL.Controllers
             return RedirectToAction(nameof(Index));
         }
         #endregion
+        #region Edit Member
+        // GET BaseUrl/Members/EditMember/{id}
+        // Edit - Display edit form 
+        [HttpGet]
+        public async Task<IActionResult> EditMember(int id, CancellationToken ct = default)
+        {
+            var member = await _memberService.GetMemberToUpdateAsync(id, ct);
+            if (member == null)
+            {
+                TempData["ErrorMessage"] = "Member Not Found";
+                return RedirectToAction(nameof(Index));
+            }
+            return View(member);
+        }
+        // POST BaseUrl/Members/EditMember {Member}
+        // Edit - Submit Form 
+
+        [HttpPost]
+        public async Task<IActionResult> EditMember([FromRoute]int id, MemberToUpdateViewModel model, CancellationToken ct = default)
+        {
+            if (!ModelState.IsValid) return View(model);
+            var res = await _memberService.UpdateMemberDetailsAsync(id, model, ct);
+            if (res)
+                TempData["SuccessMessage"] = "Member Updated Successfully";
+            else
+                TempData["ErrorMessage"] = "Failed To Update Member";
+            return RedirectToAction(nameof(Index));
+        }
+        #endregion
+        #region Delete Member
+        // Get BaseUrl/Members/DeleteMember/{id}
+        // Delete - Display delete confirmation
+        [HttpGet]
+        public async Task<IActionResult> Delete(int id , CancellationToken ct = default)
+        {
+            var member = await _memberService.GetMemberDetailsByIdAsync(id, ct);
+            if(member == null)
+            {
+                TempData["ErrorMessage"] = "Member Not Found";
+                return RedirectToAction(nameof(Index));
+            }
+            return View();
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> DeleteConfirmed([FromRoute] int id, CancellationToken ct = default)
+        {
+            var res = await _memberService.RemoveMemberAsync(id, ct);
+            if (res)
+            {
+                TempData["SuccessMessage"] = "Member Deleted Successfully";
+            }
+            else
+            {
+                TempData["ErrorMessage"] = "Failed To Delete Member. Make sure the member has no future bookings.";
+            }
+            return RedirectToAction(nameof(Index));
+        }
+        // Post BaseUrl/Members/DeleteMember/{id}
+        // Delete - Submit delete request
+        #endregion
+
     }
 }

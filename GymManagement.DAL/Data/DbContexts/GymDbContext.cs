@@ -16,13 +16,12 @@ namespace GymManagement.DAL.Data.DbContexts
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.ApplyConfigurationsFromAssembly(typeof(GymDbContext).Assembly);
-            modelBuilder.Entity<GymUser>().HasDiscriminator<string>("UserType")
-                .HasValue<Member>("Member")
-                .HasValue<Trainer>("Trainer");
+            
         }
         public DbSet<Plan> Plans { get; set; }
         public DbSet<Category> Categories { get; set; }
-        public DbSet<GymUser> GymUsers { get; set; }
+        public DbSet<Trainer> Trainers { get; set; }
+        public DbSet<Member> Members { get; set; }
         public DbSet<Session> Sessions { get; set; }
         public DbSet<Membership> Memberships { get; set; }
         public DbSet<Booking> Bookings { get; set; }

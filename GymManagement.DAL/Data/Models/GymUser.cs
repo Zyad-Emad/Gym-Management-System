@@ -9,7 +9,7 @@ using System.Threading.Tasks;
 namespace GymManagement.DAL.Data.Models
 {
 
-    public class GymUser : BaseEntity
+    public abstract class GymUser : BaseEntity
     {
         public string Name { get; set; } = default!;
         public string Email { get; set; } = default!;

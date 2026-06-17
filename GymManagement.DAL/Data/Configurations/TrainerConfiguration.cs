@@ -11,9 +11,8 @@ namespace GymManagement.DAL.Data.Configurations
 {
     internal class TrainerConfiguration : GymUserConfiguration<Trainer>
     {
-        public override void Configure(EntityTypeBuilder<Trainer> builder)
+        public new void Configure(EntityTypeBuilder<Trainer> builder)
         {
-            base.Configure(builder);
 
             //Trainer Configuration
             builder.Property(t => t.HireDate)
@@ -22,6 +21,8 @@ namespace GymManagement.DAL.Data.Configurations
             builder.Property(t => t.Speciality)
                 .HasConversion<string>()
                 .HasMaxLength(30);
+            base.Configure(builder); 
+
         }
     }
 }

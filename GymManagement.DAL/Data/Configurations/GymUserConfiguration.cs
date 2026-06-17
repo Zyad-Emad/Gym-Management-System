@@ -11,9 +11,8 @@ namespace GymManagement.DAL.Data.Configurations
 {
     internal class GymUserConfiguration<T> : IEntityTypeConfiguration<T> where T : GymUser
     {
-        public virtual void Configure(EntityTypeBuilder<T> builder)
+        public void Configure(EntityTypeBuilder<T> builder)
         {
-            builder.HasDiscriminator<string>("UserType");
 
             builder.Property(x => x.Name)
                    .HasColumnType("varchar")
