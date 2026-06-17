@@ -11,9 +11,9 @@ namespace GymManagement.DAL.Repositories.Interfaces
     public interface IGenericRepository<TEntity> where TEntity : class, new()
     {
         
-        Task<int> AddAsync(TEntity entity , CancellationToken ct = default);
-        Task<int> UpdateAsync(TEntity entity, CancellationToken ct = default);
-        Task<int> DeleteAsync(TEntity entity, CancellationToken ct = default);
+        void Add(TEntity entity );
+        void Update(TEntity entity );
+        void Delete(TEntity entity);
         Task<IEnumerable<TEntity>> GetAllAsync(bool tracking = false, CancellationToken ct = default);
         Task<TEntity?> GetByIdAsync(int id, CancellationToken ct = default);
         Task<bool> AnyAsync(Expression<Func<TEntity, bool>> predicate, CancellationToken ct = default);

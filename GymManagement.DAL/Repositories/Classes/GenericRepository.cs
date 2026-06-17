@@ -19,21 +19,18 @@ namespace GymManagement.DAL.Repositories.Classes
             _dbContext = gymDbContext;
             _dbSet = _dbContext.Set<TEntity>();
         }
-        public async Task<int> AddAsync(TEntity entity, CancellationToken ct = default)
+        public void Add(TEntity entity)
         {
             _dbSet.Add(entity);
-            return await _dbContext.SaveChangesAsync(ct);
         }
 
-        public async Task<int> DeleteAsync(TEntity entity, CancellationToken ct = default)
+        public void Delete(TEntity entity)
         {
             _dbSet.Remove(entity);
-            return await _dbContext.SaveChangesAsync(ct);
         }
-        public async Task<int> UpdateAsync(TEntity entity, CancellationToken ct = default)
+        public void Update(TEntity entity)
         {
             _dbSet.Update(entity);
-            return await _dbContext.SaveChangesAsync(ct);
         }
         public async Task<IEnumerable<TEntity>> GetAllAsync(bool tracking = false, CancellationToken ct = default)
         {
