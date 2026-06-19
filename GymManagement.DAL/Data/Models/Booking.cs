@@ -8,7 +8,6 @@ namespace GymManagement.DAL.Data.Models
 {
     public class Booking : BaseEntity
     {
-        public DateTime Date { get; set; }
         public bool Attended { get; set; }
         public int MemberId { get; set; }
         public Member Member { get; set; } = default!;

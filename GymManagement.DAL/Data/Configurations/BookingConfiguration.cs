@@ -22,7 +22,7 @@ namespace GymManagement.DAL.Data.Configurations
                 .IsRequired()
                 .HasDefaultValue(false);
 
-            builder.Property(b => b.Date)
+            builder.Property(b => b.CreatedAt)
                    .HasDefaultValueSql("GETDATE()");
 
             builder.HasIndex(b => new

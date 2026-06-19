@@ -1,4 +1,6 @@
-﻿using GymManagement.BLL.Services.Interfaces;
+﻿using AutoMapper;
+using GymManagement.BLL.Common;
+using GymManagement.BLL.Services.Interfaces;
 using GymManagement.BLL.ViewModels.MemberViewModels;
 using GymManagement.DAL.Data.Models;
 using GymManagement.DAL.Repositories.Interfaces;
@@ -13,76 +15,43 @@ namespace GymManagement.BLL.Services.Classes
     public class MemberService : IMemberService
     {
         private readonly IUnitOfWork _unitOfWork;
+        private readonly IMapper mapper;
 
-        public MemberService(IUnitOfWork unitOfWork)
+        public MemberService(IUnitOfWork unitOfWork , IMapper mapper)
         {
             _unitOfWork = unitOfWork;
+            this.mapper = mapper;
         }
 
-        public async Task<bool> CreateMemberAsync(CreateMemberViewModel model, CancellationToken ct = default)
+        public async Task<Result> CreateMemberAsync(CreateMemberViewModel model, CancellationToken ct = default)
         {
             //Check Email
             var emailExists = await _unitOfWork.GetRepository<Member>().AnyAsync(x => x.Email == model.Email, ct);
             //Check Phone number
             var phoneExists = await _unitOfWork.GetRepository<Member>().AnyAsync(x => x.Phone == model.Phone, ct);
             //Email Or Phone Exists return false
-            if (phoneExists || emailExists) return false;
+            if (phoneExists) return Result.ValidationFailed("The Same Phone Number Already Exists");
+            if (emailExists) return Result.ValidationFailed("The Same Email Already Exists");
             //else return true add member
-            var member = new Member()
-            {
-                Name = model.Name ,
-                Email = model.Email ,
-                Phone = model.Phone ,
-                Gender = model.Gender,
-                DateOfBirth = model.DateOfBirth,
-                Address = new Address()
-                {
-                    BuildingNumber = model.BuildingNumber,
-                    City = model.City,
-                    Street = model.Street
-                },
-                HealthRecord = new HealthRecord()
-                {
-                    BloodType = model.HealthRecordViewModel.BloodType,
-                    Weight = model.HealthRecordViewModel.Weight,
-                    Height = model.HealthRecordViewModel.Height,
-                    Note = model.HealthRecordViewModel.Note
-                }
-            };
+            var member = mapper.Map<CreateMemberViewModel, Member>(model);
             _unitOfWork.GetRepository<Member>().Add(member);
             var res = await _unitOfWork.SaveChangesAsync(ct);
-            return res > 0;
+            return res > 0 ? Result.OK() : Result.Fail("Failed to create member");
         }
 
         public async Task<IEnumerable<MemberViewModel>> GetAllMembersAsync(CancellationToken ct = default)
         {
             var members = await _unitOfWork.GetRepository<Member>().GetAllAsync(ct: ct);
             if (!members.Any()) return [];
-            IEnumerable<MemberViewModel> result = members.Select(m => new MemberViewModel
-            {
-                Name = m.Name,
-                Photo = m.Photo,
-                Email = m.Email,
-                Gender = m.Gender.ToString(),
-                Phone = m.Phone ,
-                Id = m.Id 
-            });
+            IEnumerable<MemberViewModel> result = mapper.Map<IEnumerable<Member>, IEnumerable<MemberViewModel>>(members);
             return result;
         }
 
-        public async Task<MemberViewModel?> GetMemberDetailsByIdAsync(int MemberId, CancellationToken ct = default)
+        public async Task<Result<MemberViewModel>> GetMemberDetailsByIdAsync(int MemberId, CancellationToken ct = default)
         {
             var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(MemberId, ct);
-            if (member == null) return null;
-            var model = new MemberViewModel()
-            {
-                Name = member.Name,
-                Phone = member.Phone,
-                DateOfBirth = member.DateOfBirth.ToShortDateString(),
-                Gender = member.Gender.ToString(),
-                Address = $"{member.Address.BuildingNumber} - {member.Address.Street} - {member.Address.City}",
-
-            };
+            if (member == null) return Result<MemberViewModel>.NotFound("Member Not Found");
+            var model = mapper.Map<Member , MemberViewModel>(member);
             var ActiveMembership = await _unitOfWork.GetRepository<Membership>().FirstOrDefaultAsync(x => x.MemberId ==  MemberId && x.EndDate > DateTime.Now);
             if(ActiveMembership is not null)
             {
@@ -91,68 +60,53 @@ namespace GymManagement.BLL.Services.Classes
                 model.MembershipStartDate = ActiveMembership.StartDate.ToString();
                 model.MembershipEndDate = ActiveMembership.EndDate.ToString();
             }
-            return model;
+            return Result<MemberViewModel>.OK(model);
         }
 
-        public async Task<HealthRecordViewModel?> GetMemberHealthRecordAsync(int MemberId, CancellationToken ct = default)
+        public async Task<Result<HealthRecordViewModel>> GetMemberHealthRecordAsync(int MemberId, CancellationToken ct = default)
         {
             var record = await _unitOfWork.GetRepository<HealthRecord>().FirstOrDefaultAsync(x => x.MemberId == MemberId, ct: ct);
-            if (record == null) return null;
-            return new HealthRecordViewModel()
-            {
-                Weight = record.Weight,
-                Height = record.Height,
-                BloodType = record.BloodType,
-                Note = record.Note
-
-            };
+            if (record == null) return Result<HealthRecordViewModel>.NotFound("Health Record Not Found");
+            var res = mapper.Map<HealthRecord, HealthRecordViewModel>(record);
+            return  Result<HealthRecordViewModel>.OK(res);
         }
 
-        public async Task<MemberToUpdateViewModel?> GetMemberToUpdateAsync(int MemberId, CancellationToken ct = default)
+        public async Task<Result<MemberToUpdateViewModel>> GetMemberToUpdateAsync(int MemberId, CancellationToken ct = default)
         {
             var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(MemberId, ct);
-            if (member == null) return null;
-            return new MemberToUpdateViewModel()
-            {
-                Name = member.Name,
-                Phone = member.Phone,
-                Email = member.Email,
-                BuildingNumber = member.Address.BuildingNumber,
-                Street = member.Address.Street,
-                City = member.Address.City,
-                Photo = member.Photo
-            };
+            if (member == null) return Result<MemberToUpdateViewModel>.NotFound("Member Not Found");
+            var res = mapper.Map<Member, MemberToUpdateViewModel>(member);
+            return Result<MemberToUpdateViewModel>.OK(res);
         }
 
-        public async Task<bool> RemoveMemberAsync(int MemberId, CancellationToken ct = default)
+        public async Task<Result> RemoveMemberAsync(int MemberId, CancellationToken ct = default)
         {
             var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(MemberId, ct);
-            if(member == null) return false;
+            if(member == null) return Result.NotFound("Member Not Found");
 
             var HasFutureBookings = await _unitOfWork.GetRepository<Booking>().AnyAsync(x => x.MemberId == MemberId && x.Session.StartDate > DateTime.Now, ct);
-            if(HasFutureBookings) return false;
+            if(HasFutureBookings) return Result.ValidationFailed("Member cannot be deleted because of Future bookings");
             _unitOfWork.GetRepository<Member>().Delete(member);
             var res = await _unitOfWork.SaveChangesAsync(ct);
-            return res > 0;
+            return res > 0 ? Result.OK() : Result.Fail("Failed To Remove Member");
         }
 
-        public async Task<bool> UpdateMemberDetailsAsync(int id, MemberToUpdateViewModel model, CancellationToken ct = default)
+        public async Task<Result> UpdateMemberDetailsAsync(int id, MemberToUpdateViewModel model, CancellationToken ct = default)
         {
             var member = await _unitOfWork.GetRepository<Member>().GetByIdAsync(id, ct);
-            if (member == null) return false;
+            if (member == null) return Result.NotFound("Member Not Found");
             var emailExists = await _unitOfWork.GetRepository<Member>().AnyAsync(x => x.Email == model.Email && x.Id != id, ct); 
             var phoneExists = await _unitOfWork.GetRepository<Member>().AnyAsync(x => x.Phone == model.Phone && x.Id != id, ct);
-            if(emailExists || phoneExists) return false;
-            member.Email = model.Email;
-            member.Phone = model.Phone;
-            member.Address.BuildingNumber = model.BuildingNumber;
-            member.Address.Street = model.Street;
-            member.Address.City = model.City;
+
+            if (phoneExists) return Result.ValidationFailed("The Same Phone Number Already Exists");
+            if (emailExists) return Result.ValidationFailed("The Same Email Already Exists");
+
+            mapper.Map<MemberToUpdateViewModel, Member>(model, member);
             member.UpdatedAt = DateTime.Now;
 
             _unitOfWork.GetRepository<Member>().Update(member);
             var res = await _unitOfWork.SaveChangesAsync(ct);
-            return res > 0;
+            return res > 0 ? Result.OK() : Result.Fail("Failed To Update Member");
         }
     }
 }

@@ -23,53 +23,53 @@ namespace GymManagement.PL.Controllers
         {
             if (!ModelState.IsValid) return View(model);
             var res = await trainerService.CreateTrainerAsync(model, ct);
-            if (res)
+            if (res.success)
             {
                 TempData["SuccessMessage"] = "Trainer Created Successfully.";
                 return RedirectToAction(nameof(Index));
             }
-            TempData["ErrorMessage"] = "Trainer Failed to create.";
-            return View(model);
+            TempData["ErrorMessage"] = res.error;
+            return RedirectToAction(nameof(Index));
         }
         [HttpGet]
         public async Task<IActionResult> Details(int id , CancellationToken ct)
         {
-            var trainer = await trainerService.GetTrainerDetailsAsync(id, ct);
-            if(trainer == null)
+            var res = await trainerService.GetTrainerDetailsAsync(id, ct);
+            if(!res.success)
             {
-                TempData["ErrorMessage"] = "Trainer Not Found.";
+                TempData["ErrorMessage"] = res.error;
                 return RedirectToAction(nameof(Index));
             }
-            return View(trainer);
+            return View(res.data);
         }
         [HttpGet]
         public async Task<IActionResult> Edit(int id , CancellationToken ct)
         {
-            var trainer = await trainerService.GetTrainerToUpdateAsync(id, ct);
-            if(trainer is null)
+            var res = await trainerService.GetTrainerToUpdateAsync(id, ct);
+            if(!res.success)
             {
-                TempData["ErrorMessage"] = "Trainer Not Found.";
+                TempData["ErrorMessage"] = res.error;
                 return RedirectToAction(nameof(Index));
             }
-            return View(trainer);
+            return View(res.data);
         }
         [HttpPost]
         public async Task<IActionResult> Edit(int id , TrainerToUpdateViewModel model , CancellationToken ct)
         {
             if (!ModelState.IsValid) return View(model);
             var res = await trainerService.UpdateTrainerDetailsAsync(id , model , ct);
-            if (res)
+            if (res.success)
                 TempData["SuccessMessage"] = "Trainer Updated Successfully";
-            else TempData["ErrorMessage"] = "Trainer Failed To Update";
+            else TempData["ErrorMessage"] = res.error;
             return RedirectToAction(nameof(Index));
         }
         [HttpGet]
         public async Task<IActionResult> Delete(int id , CancellationToken ct)
         {
-            var trainer = await trainerService.GetTrainerDetailsAsync(id, ct);
-            if(trainer is null)
+            var res = await trainerService.GetTrainerDetailsAsync(id, ct);
+            if(!res.success)
             {
-                TempData["ErrorMessage"] = "Trainer Not Found.";
+                TempData["ErrorMessage"] = res.error;
                 return RedirectToAction(nameof(Index));
             }
             return View();
@@ -78,8 +78,8 @@ namespace GymManagement.PL.Controllers
         public async Task<IActionResult> DeleteConfirmed(int id , CancellationToken ct)
         {
             var res = await trainerService.RemoveTrainerAsync(id, ct);
-            if (res) TempData["SuccessMessage"] = "Trainer Deleted Successfully.";
-            else TempData["ErrorMessage"] = "Failed to delete Trainer.";
+            if (res.success) TempData["SuccessMessage"] = "Trainer Deleted Successfully.";
+            else TempData["ErrorMessage"] = res.error;
             return RedirectToAction(nameof(Index));
         }
 

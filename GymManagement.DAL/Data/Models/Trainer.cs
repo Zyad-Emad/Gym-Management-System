@@ -11,7 +11,6 @@ namespace GymManagement.DAL.Data.Models
     {
         //HireDate = CreatedAt of BaseEntity
         public Speciality Speciality { get; set; }
-        public DateTime HireDate { get; set; }
         public ICollection<Session> Sessions { get; set; } = new HashSet<Session>();
     }
 }

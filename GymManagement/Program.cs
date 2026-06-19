@@ -1,9 +1,12 @@
+using AutoMapper;
+using GymManagement.BLL;
 using GymManagement.BLL.Services.Classes;
 using GymManagement.BLL.Services.Interfaces;
 using GymManagement.DAL.Data.DbContexts;
 using GymManagement.DAL.Data.Seed;
 using GymManagement.DAL.Repositories.Classes;
 using GymManagement.DAL.Repositories.Interfaces;
+using GymManagement.PL;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
@@ -24,6 +27,7 @@ namespace GymManagement
             builder.Services.AddScoped<ITrainerService, TrainerService>();
             builder.Services.AddScoped<ISessionService, SessionService>();
             builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+            builder.Services.AddAutoMapper(m => m.AddProfile(new MappingProfile()));
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 
             builder.Services.AddDbContext<GymDbContext>(options =>
@@ -32,23 +36,7 @@ namespace GymManagement
             });
             var app = builder.Build();
 
-            using (var scope = app.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                try
-                {
-                    var context = services.GetRequiredService<GymDbContext>();
-
-                    await context.Database.MigrateAsync();
-
-                    await DatabaseSeeder.SeedAllAsync(context);
-                }
-                catch (Exception ex)
-                {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred while migrating or seeding the database.");
-                }
-            }
+            await app.MigrateAndSeedDatabaseAsync();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())

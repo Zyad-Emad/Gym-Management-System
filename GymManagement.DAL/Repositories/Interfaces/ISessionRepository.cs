@@ -11,5 +11,6 @@ namespace GymManagement.DAL.Repositories.Interfaces
     {
         Task<IEnumerable<Session>> GetSessionsWithTrainerAndCategoryAsync(CancellationToken ct = default);
         Task<int> GetCountOfBookedSlotsAsync(int sessionId, CancellationToken ct = default);    
+        Task<Session?> GetSessionWithTrainerAndCategoryByIdAsync(int sessionId, CancellationToken ct = default);
     }
 }
