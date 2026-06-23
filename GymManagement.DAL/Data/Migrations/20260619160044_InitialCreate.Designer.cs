@@ -8,8 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
-
-namespace GymManagement.DAL.Migrations
+namespace GymManagement.DAL.Data.Migrations
 {
     [DbContext(typeof(GymDbContext))]
     [Migration("20260619160044_InitialCreate")]

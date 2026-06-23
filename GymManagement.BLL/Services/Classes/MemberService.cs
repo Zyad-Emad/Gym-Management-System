@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using GymManagement.BLL.Common;
+using GymManagement.BLL.Services.Attachment;
 using GymManagement.BLL.Services.Interfaces;
 using GymManagement.BLL.ViewModels.MemberViewModels;
 using GymManagement.DAL.Data.Models;
@@ -16,11 +17,13 @@ namespace GymManagement.BLL.Services.Classes
     {
         private readonly IUnitOfWork _unitOfWork;
         private readonly IMapper mapper;
+        private readonly IAttachmentService attachmentService;
 
-        public MemberService(IUnitOfWork unitOfWork , IMapper mapper)
+        public MemberService(IUnitOfWork unitOfWork , IMapper mapper , IAttachmentService attachmentService)
         {
             _unitOfWork = unitOfWork;
             this.mapper = mapper;
+            this.attachmentService = attachmentService;
         }
 
         public async Task<Result> CreateMemberAsync(CreateMemberViewModel model, CancellationToken ct = default)
@@ -32,11 +35,20 @@ namespace GymManagement.BLL.Services.Classes
             //Email Or Phone Exists return false
             if (phoneExists) return Result.ValidationFailed("The Same Phone Number Already Exists");
             if (emailExists) return Result.ValidationFailed("The Same Email Already Exists");
+
+            //Upload Photo
+            var result = await attachmentService.UploadAsync(model.PhotoFile.OpenReadStream(), model.PhotoFile.FileName, "MembersPhoto");
+            if (string.IsNullOrWhiteSpace(result.data)) return Result.Fail(result.error!);
+            
             //else return true add member
             var member = mapper.Map<CreateMemberViewModel, Member>(model);
+            member.Photo = result.data;
             _unitOfWork.GetRepository<Member>().Add(member);
             var res = await _unitOfWork.SaveChangesAsync(ct);
-            return res > 0 ? Result.OK() : Result.Fail("Failed to create member");
+            if (res > 0) return Result.OK();
+            //delete uploaded photo
+            attachmentService.Delete(result.data, "MembersPhoto");
+            return Result.Fail("Failed to create member");
         }
 
         public async Task<IEnumerable<MemberViewModel>> GetAllMembersAsync(CancellationToken ct = default)
@@ -88,7 +100,15 @@ namespace GymManagement.BLL.Services.Classes
             if(HasFutureBookings) return Result.ValidationFailed("Member cannot be deleted because of Future bookings");
             _unitOfWork.GetRepository<Member>().Delete(member);
             var res = await _unitOfWork.SaveChangesAsync(ct);
-            return res > 0 ? Result.OK() : Result.Fail("Failed To Remove Member");
+            if (res > 0)
+            {
+                if (!string.IsNullOrWhiteSpace(member.Photo))
+                {
+                    attachmentService.Delete(member.Photo, "MembersPhoto");
+                }
+                return Result.OK();
+            }
+            return Result.Fail("Failed To Remove Member");
         }
 
         public async Task<Result> UpdateMemberDetailsAsync(int id, MemberToUpdateViewModel model, CancellationToken ct = default)

@@ -2,8 +2,7 @@
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
-
-namespace GymManagement.DAL.Migrations
+namespace GymManagement.DAL.Data.Migrations
 {
     /// <inheritdoc />
     public partial class InitialCreate : Migration

@@ -1,18 +1,42 @@
-﻿using GymManagement.BLL.Services.Interfaces;
+﻿using GymManagement.BLL.Services.Attachment;
+using GymManagement.BLL.Services.Interfaces;
 using GymManagement.BLL.ViewModels.MemberViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 
 namespace GymManagement.PL.Controllers
 {
+    [Authorize(Roles = "SuperAdmin")]
+
     public class MembersController : Controller
     {
         private readonly IMemberService _memberService;
+        private readonly IAttachmentService attachmentService;
 
-        public MembersController(IMemberService memberService)
+        public MembersController(IMemberService memberService , IAttachmentService attachmentService)
         {
             _memberService = memberService;
+            this.attachmentService = attachmentService;
         }
+
+        #region Get Member Photo
+        [HttpGet]
+        public async Task<IActionResult> Picture(int id)
+        {
+            var memberResult = await _memberService.GetMemberDetailsByIdAsync(id);
+            if (!memberResult.success)
+                return NotFound(memberResult.error);
+            if (string.IsNullOrWhiteSpace(memberResult.data!.Photo))
+                return NotFound(memberResult.error);
+            
+            var fileResult = attachmentService.GetFile(memberResult.data!.Photo , "MembersPhoto");
+            if (!fileResult.success)
+                return NotFound(fileResult.error);
+            return File(fileResult.data.stream, fileResult.data.contentType);
+        }
+        #endregion
+
         //GET BaseUrl/Members/Index
         //Index - List all members
         public async Task<IActionResult> Index(CancellationToken ct)
