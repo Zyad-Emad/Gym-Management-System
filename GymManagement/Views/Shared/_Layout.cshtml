@@ -1,4 +1,8 @@
-﻿<!DOCTYPE html>
+﻿@{
+    var currentController = ViewContext.RouteData.Values["Controller"]?.ToString();
+}
+
+<!DOCTYPE html>
 <html lang="en">
 
 <head>
@@ -14,7 +18,7 @@
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <!-- ^ Our main css file -->
     <link rel="stylesheet" href="~/css/style.css" />
-    <title>Power fitness | Home</title>
+    <title>Power fitness | @ViewData["Title"] </title>
 </head>
 <body>
     <header>
@@ -33,25 +37,29 @@
                     <ul class="navbar-nav m-auto mb-2 mb-lg-0 mt-3 mt-lg-0">
                         <li class="nav-item">
                         <li class="nav-item">
-                            <a class="nav-link active px-3 py-2 mx-2 fw-bolder fs-5" aria-current="page" href="#">Home</a>
+                            <a asp-controller="Home" asp-action="Index" class="nav-link @(currentController == "Home" ? "active" : "text-black-alternative") px-3 py-2 mx-2 fw-bolder fs-5">Home</a>
+                        </li>
+                        @if (User.IsInRole("SuperAdmin"))
+                        {
+                            <li class="nav-item">
+                                <a asp-controller="Members" asp-action="Index" class="nav-link @(currentController == "Members" ? "active" : "text-black-alternative") px-3 py-2 mx-2 fw-bolder fs-5">Members</a>
+                            </li>
+                            <li class="nav-item">
+                                <a asp-controller="Trainers" asp-action="Index" class="nav-link @(currentController == "Trainers" ? "active" : "text-black-alternative") px-3 py-2 mx-2 fw-bolder fs-5">Trainers</a>
+                            </li>
+                        }
+                           
+                        <li class="nav-item">
+                            <a asp-controller="Sessions" asp-action="Index" class="nav-link @(currentController == "Sessions" ? "active" : "text-black-alternative") px-3 py-2 mx-2 fw-bolder fs-5">Sessions</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link  px-3 py-2 mx-2 fw-bolder fs-5" aria-current="page" href="#">Members</a>
+                            <a asp-controller="Plans" asp-action="Index" class="nav-link @(currentController == "Plans" ? "active" : "text-black-alternative") px-3 py-2 mx-2 fw-bolder fs-5">Plans</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link  px-3 py-2 mx-2 fw-bolder fs-5" aria-current="page" href="#">Trainers</a>
+                            <a asp-controller="Memberships" asp-action="Index" class="nav-link @(currentController == "Memberships" ? "active" : "text-black-alternative") px-3 py-2 mx-2 fw-bolder fs-5">Memberships</a>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link  px-3 py-2 mx-2 fw-bolder fs-5" aria-current="page" href="#">Sessions</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link  px-3 py-2 mx-2 fw-bolder fs-5" aria-current="page" href="#">Plans</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link  px-3 py-2 mx-2 fw-bolder fs-5" aria-current="page" href="#">Memberships</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link  px-3 py-2 mx-2 fw-bolder fs-5" aria-current="page" href="#">Sessions Schedule</a>
+                            <a asp-controller="Booking" asp-action="Index" class="nav-link @(currentController == "Booking" ? "active" : "text-black-alternative") px-3 py-2 mx-2 fw-bolder fs-5">Sessions Schedule</a>
                         </li>
                         <li class="nav-item">
                             <form asp-action="Logout" asp-controller="Account" method="post" class="d-inline">
@@ -76,6 +84,8 @@
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>
+
     @await RenderSectionAsync("Scripts", required: false)
+    @await RenderSectionAsync("ValidationScripts", required: false)
 </body>
 </html>

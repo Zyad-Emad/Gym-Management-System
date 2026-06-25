@@ -1,7 +1,15 @@
+using AutoMapper;
+using GymManagement.BLL;
+using GymManagement.BLL.Services.Attachment;
+using GymManagement.BLL.Services.Classes;
+using GymManagement.BLL.Services.Interfaces;
+using GymManagement.DAL.Data.DbContexts;
+using GymManagement.DAL.Data.Models;
+using GymManagement.DAL.Data.Seed;
 using GymManagement.DAL.Repositories.Classes;
 using GymManagement.DAL.Repositories.Interfaces;
-using GymManagement.DAL.Seed;
-using GymManagement.DbContexts;
+using GymManagement.PL;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Threading.Tasks;
 
@@ -15,30 +23,37 @@ namespace GymManagement
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
-            builder.Services.AddScoped<IPlanRepository, PlanRepository>();
+            //builder.Services.AddScoped<IPlanRepository, PlanRepository>();
+            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            builder.Services.AddScoped<IMemberService , MemberService>();
+            builder.Services.AddScoped<IPlanService , PlanService>();
+            builder.Services.AddScoped<ITrainerService, TrainerService>();
+            builder.Services.AddScoped<ISessionService, SessionService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
+            builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+            builder.Services.AddScoped<IBookingRepository, BookingRepository>();
+            builder.Services.AddScoped<IAnalyticsService ,  AnalyticsService>();
+            builder.Services.AddScoped<IMembershipRepository , MembershipRepository>();
+            builder.Services.AddScoped<IAttachmentService , AttachmentService>();
+            builder.Services.AddScoped<IMembershipService , MembershipService>();
+            builder.Services.AddAutoMapper(m => m.AddProfile(new MappingProfile()));
+            builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
+            builder.Services.AddIdentity<ApplicationUser, IdentityRole>(config =>
+            {
+                config.User.RequireUniqueEmail = true;
+                config.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(2);
+                config.Lockout.MaxFailedAccessAttempts = 5;
+            })
+                .AddEntityFrameworkStores<GymDbContext>();
+
+
             builder.Services.AddDbContext<GymDbContext>(options =>
             {
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
             });
             var app = builder.Build();
 
-            using (var scope = app.Services.CreateScope())
-            {
-                var services = scope.ServiceProvider;
-                try
-                {
-                    var context = services.GetRequiredService<GymDbContext>();
-
-                    await context.Database.MigrateAsync();
-
-                    await DatabaseSeeder.SeedAllAsync(context);
-                }
-                catch (Exception ex)
-                {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred while migrating or seeding the database.");
-                }
-            }
+            await app.MigrateAndSeedDatabaseAsync();
 
             // Configure the HTTP request pipeline.
             if (!app.Environment.IsDevelopment())
@@ -51,12 +66,13 @@ namespace GymManagement
             app.UseHttpsRedirection();
             app.UseRouting();
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.MapStaticAssets();
             app.MapControllerRoute(
                 name: "default",
-                pattern: "{controller=Home}/{action=Index}/{id?}")
+                pattern: "{controller=Account}/{action=Login}/{id?}")
                 .WithStaticAssets();
 
             app.Run();
