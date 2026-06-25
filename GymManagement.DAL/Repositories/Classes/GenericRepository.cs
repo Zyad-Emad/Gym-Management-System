@@ -32,9 +32,10 @@ namespace GymManagement.DAL.Repositories.Classes
         {
             _dbSet.Update(entity);
         }
-        public async Task<IEnumerable<TEntity>> GetAllAsync(bool tracking = false, CancellationToken ct = default)
+        public async Task<IEnumerable<TEntity>> GetAllAsync(Expression<Func<TEntity, bool>>? predicate = null, bool tracking = false, CancellationToken ct = default)
         {
-            IQueryable<TEntity> query = (tracking ? _dbSet : _dbSet.AsNoTracking());
+            IQueryable<TEntity> query = tracking ? _dbSet : _dbSet.AsNoTracking();
+            if (predicate is not null) query = query.Where(predicate);
             return await query.ToListAsync(ct);
         }
         public async Task<TEntity?> GetByIdAsync(int id, CancellationToken ct = default) => await _dbSet.FindAsync([id] , ct); // Note : dont write FindAsync(id , ct) as it will consider ct a part of key values

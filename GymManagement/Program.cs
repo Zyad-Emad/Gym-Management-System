@@ -29,9 +29,13 @@ namespace GymManagement
             builder.Services.AddScoped<IPlanService , PlanService>();
             builder.Services.AddScoped<ITrainerService, TrainerService>();
             builder.Services.AddScoped<ISessionService, SessionService>();
+            builder.Services.AddScoped<IBookingService, BookingService>();
             builder.Services.AddScoped<ISessionRepository, SessionRepository>();
+            builder.Services.AddScoped<IBookingRepository, BookingRepository>();
             builder.Services.AddScoped<IAnalyticsService ,  AnalyticsService>();
+            builder.Services.AddScoped<IMembershipRepository , MembershipRepository>();
             builder.Services.AddScoped<IAttachmentService , AttachmentService>();
+            builder.Services.AddScoped<IMembershipService , MembershipService>();
             builder.Services.AddAutoMapper(m => m.AddProfile(new MappingProfile()));
             builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
             builder.Services.AddIdentity<ApplicationUser, IdentityRole>(config =>

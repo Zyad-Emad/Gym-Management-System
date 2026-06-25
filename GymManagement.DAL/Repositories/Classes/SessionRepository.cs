@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -25,11 +26,15 @@ namespace GymManagement.DAL.Repositories.Classes
                 .AsNoTracking().CountAsync(b => b.SessionId == sessionId, ct);
         }
 
-        public async Task<IEnumerable<Session>> GetSessionsWithTrainerAndCategoryAsync(CancellationToken ct = default)
+        public async Task<IEnumerable<Session>> GetSessionsWithTrainerAndCategoryAsync(Expression<Func<Session, bool>>? predicate = null , CancellationToken ct = default)
         {
-            var query = _dbContext.Sessions.AsNoTracking()
+            IQueryable<Session> query = _dbContext.Sessions
+                .AsNoTracking()
                 .Include(s => s.Trainer)
                 .Include(s => s.Category);
+
+            if (predicate is not null) query = query.Where(predicate);
+
             return await query.ToListAsync(ct);
         }
 

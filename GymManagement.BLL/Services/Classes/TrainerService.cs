@@ -62,9 +62,16 @@ namespace GymManagement.BLL.Services.Classes
         {
             var trainer = await _unitOfWork.GetRepository<Trainer>().GetByIdAsync(TrainerId, ct);
             if (trainer == null) return Result.NotFound("Trainer Not Found");
-            var hasFutureSessions = await _unitOfWork.GetRepository<Session>().AnyAsync(s => s.TrainerId == TrainerId && 
-            s.StartDate > DateTime.Now, ct);  
-            if(hasFutureSessions) return Result.ValidationFailed("Trainer has Future Session");
+            var hasActiveOrFutureSessions =
+            await _unitOfWork.GetRepository<Session>()
+            .AnyAsync(s =>
+            s.TrainerId == TrainerId &&
+            s.EndDate > DateTime.Now,
+            ct);
+
+            if (hasActiveOrFutureSessions)
+                return Result.ValidationFailed(
+                    "Trainer has active or upcoming sessions.");
             _unitOfWork.GetRepository<Trainer>().Delete(trainer);
             var res = await _unitOfWork.SaveChangesAsync(ct);
             return res > 0 ? Result.OK() : Result.Fail("Failed To Remove Trainer");
